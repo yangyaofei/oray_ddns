@@ -158,9 +158,17 @@ else:
 # real process start
 # set logger
 logging.basicConfig(filename='logger.log', level=logging.INFO)
+# disable some logger
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+# set log format
+console = logging.StreamHandler()
+formatter = logging.Formatter("[%(levelname)s][%(asctime)s][%(process)d:%(processName)s]%(message)s")
+console.setFormatter(formatter)
+logging.getLogger("").addHandler(console)
 # load conf
 conf = get_conf()
-logging.info("load config:" + str(conf))
+logging.info("load config : " + str(conf))
 ip = "0.0.0.0"
 request_url = request_url_format.format(conf["name"], conf["pwd"], conf["host"], ip)
 logging.debug("request url : " + request_url)
@@ -172,19 +180,19 @@ while True:
     iterator -= 1   # 计时
     if ip != ip_temp:
         response = requests.get(request_url).text
-        logging.debug("response:" + response)
+        logging.debug("response : " + response)
         if response.find("good") != -1 or \
                 response.find("nochg") != -1:
-            logging.info("update success" + response)
+            logging.info("update success!\n" + response)
             iterator = 600   # 成功更新重置计时
         else:
             logging.info("update fail")
     if iterator < 1:
         response = requests.get(request_url).text
-        logging.debug("response:" + response)
+        logging.debug("response : " + response)
         if response.find("good") != -1 or \
                 response.find("nochg") != -1:
-            logging.info("update success" + response)
+            logging.info("update success!\n" + response)
             iterator = 600   # 成功更新重置计时
         else:
             logging.info("update fail")
