@@ -183,7 +183,7 @@ while True:
         logging.debug("response : " + response)
         if response.find("good") != -1 or \
                 response.find("nochg") != -1:
-            logging.info("update success!\n" + response)
+            logging.info("update success!  " + response)
             iterator = 600   # 成功更新重置计时
         else:
             logging.info("update fail")
@@ -192,7 +192,7 @@ while True:
         logging.debug("response : " + response)
         if response.find("good") != -1 or \
                 response.find("nochg") != -1:
-            logging.info("update success!\n" + response)
+            logging.info("update success!  " + response)
             iterator = 600   # 成功更新重置计时
         else:
             logging.info("update fail")
