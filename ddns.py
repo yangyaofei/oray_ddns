@@ -66,6 +66,19 @@ def to_str(s):
             return s.decode('utf-8')
     return s
 
+
+def update_address(ip):
+    request_url = request_url_format.format(conf["name"], conf["pwd"], conf["host"], ip)
+    logging.debug("request url : " + request_url)
+    response = requests.get(request_url).text
+    logging.debug("response : " + response)
+    if response.find("good") != -1 or response.find("nochg") != -1:
+        logging.info("update success!  " + response)
+        return True
+    else:
+        return False
+
+
 # MAIN program
 if len(sys.argv) != 2:
     print("wrong!")
@@ -81,6 +94,8 @@ if "start" == sys.argv[1]:
         if signum == signal.SIGTERM:
             sys.exit(0)
         sys.exit(1)
+
+
     # register signal
     signal.signal(signal.SIGINT, handle_exit)
     signal.signal(signal.SIGTERM, handle_exit)
@@ -157,43 +172,45 @@ else:
 
 # real process start
 # set logger
-logging.basicConfig(filename='logger.log', level=logging.INFO)
+# logging.basicConfig(filename='logger.log', level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,              # 定义输出到文件的log级别，
+    format='%(asctime)s  %(filename)s : %(levelname)s  %(message)s',    # 定义输出log的格式
+    datefmt='%Y-%m-%d %A %H:%M:%S',                                     # 时间
+    filename="logger.log",                # log文件名
+    filemode='w'
+)                        # 写入模式“w”或“a”
+console = logging.StreamHandler()                  # 定义console handler
+console.setLevel(logging.INFO)                     # 定义该handler级别
+formatter = logging.Formatter('%(asctime)s  %(filename)s : %(levelname)s  %(message)s')
+console.setFormatter(formatter)
+logging.getLogger().addHandler(console)           # 实例化添加handler
 # disable some logger
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
-# set log format
-console = logging.StreamHandler()
-formatter = logging.Formatter("[%(levelname)s][%(asctime)s][%(process)d:%(processName)s]%(message)s")
-console.setFormatter(formatter)
-logging.getLogger("").addHandler(console)
 # load conf
 conf = get_conf()
 logging.info("load config : " + str(conf))
 ip = "0.0.0.0"
-request_url = request_url_format.format(conf["name"], conf["pwd"], conf["host"], ip)
-logging.debug("request url : " + request_url)
-iterator = 600   # 更新计时
+iterator = 600  # 更新计时
 while True:
     # get IP
     ip_temp = requests.get("http://ip.cip.cc").text
     logging.debug("get IP:" + ip_temp)
-    iterator -= 1   # 计时
+    iterator -= 1  # 计时
     if ip != ip_temp:
-        response = requests.get(request_url).text
-        logging.debug("response : " + response)
-        if response.find("good") != -1 or \
-                response.find("nochg") != -1:
-            logging.info("update success!  " + response)
-            iterator = 600   # 成功更新重置计时
+        logging.info("ip address changed update DNS")
+        logging.info("update " + ip + "to " + ip_temp)
+        ip = ip_temp
+        if update_address(ip):
+            iterator = 600  # 成功更新重置计时
         else:
             logging.info("update fail")
     if iterator < 1:
-        response = requests.get(request_url).text
-        logging.debug("response : " + response)
-        if response.find("good") != -1 or \
-                response.find("nochg") != -1:
-            logging.info("update success!  " + response)
-            iterator = 600   # 成功更新重置计时
+        logging.info("time out update DNS")
+        ip = ip_temp
+        if update_address(ip):
+            iterator = 600  # 成功更新重置计时
         else:
             logging.info("update fail")
     time.sleep(60)
