@@ -14,6 +14,9 @@ conf_path = 'conf.ini'
 url_ip = "http://ip.cip.cc"
 request_url_format = "http://{0}:{1}@ddns.oray.com/ph/update?hostname={2}&myip={3}"
 pid_file = "pid"
+log_file = "logger.log"
+retry_time = 600    # minute
+test_time = 60      # second
 
 
 def get_conf():
@@ -174,17 +177,17 @@ else:
 # set logger
 # logging.basicConfig(filename='logger.log', level=logging.INFO)
 logging.basicConfig(
-    level=logging.INFO,              # 定义输出到文件的log级别，
+    level=logging.INFO,    # 定义输出到文件的log级别，
     format='%(asctime)s  %(filename)s : %(levelname)s  %(message)s',    # 定义输出log的格式
     datefmt='%Y-%m-%d %A %H:%M:%S',                                     # 时间
-    filename="logger.log",                # log文件名
+    filename=log_file,      # log文件名
     filemode='w'
 )                        # 写入模式“w”或“a”
-console = logging.StreamHandler()                  # 定义console handler
-console.setLevel(logging.INFO)                     # 定义该handler级别
+console = logging.FileHandler(log_file)             # 定义console handler
+console.setLevel(logging.INFO)                      # 定义该handler级别
 formatter = logging.Formatter('%(asctime)s  %(filename)s : %(levelname)s  %(message)s')
 console.setFormatter(formatter)
-logging.getLogger().addHandler(console)           # 实例化添加handler
+logging.getLogger().addHandler(console)             # 实例化添加handler
 # disable some logger
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -192,25 +195,26 @@ logging.getLogger("urllib3").setLevel(logging.WARNING)
 conf = get_conf()
 logging.info("load config : " + str(conf))
 ip = "0.0.0.0"
-iterator = 600  # 更新计时
+iterator = retry_time  # 更新计时
 while True:
     # get IP
     ip_temp = requests.get("http://ip.cip.cc").text
     logging.debug("get IP:" + ip_temp)
     iterator -= 1  # 计时
+    logging.debug("iterator:"+str(iterator))
     if ip != ip_temp:
         logging.info("ip address changed update DNS")
         logging.info("update " + ip + "to " + ip_temp)
         ip = ip_temp
         if update_address(ip):
-            iterator = 600  # 成功更新重置计时
+            iterator = retry_time  # 成功更新重置计时
         else:
             logging.info("update fail")
     if iterator < 1:
         logging.info("time out update DNS")
         ip = ip_temp
         if update_address(ip):
-            iterator = 600  # 成功更新重置计时
+            iterator = retry_time  # 成功更新重置计时
         else:
             logging.info("update fail")
-    time.sleep(60)
+    time.sleep(test_time)
