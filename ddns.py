@@ -9,12 +9,13 @@ import os
 import signal
 import time
 
-conf_path = 'conf.ini'
 # url_ip = "http://ddns.oray.com/checkip"
 url_ip = "http://ip.cip.cc"
 request_url_format = "http://{0}:{1}@ddns.oray.com/ph/update?hostname={2}&myip={3}"
-pid_file = "pid"
-log_file = "logger.log"
+absolute_path = os.path.realpath(__file__).replace("ddns.py", "")
+conf_path = absolute_path + 'conf.ini'
+pid_file = absolute_path + "pid"
+log_file = absolute_path + "logger.log"
 retry_time = 600    # minute
 test_time = 60      # second
 
