@@ -71,10 +71,21 @@ def to_str(s):
     return s
 
 
+def freopen(f, mode, stream):
+    oldf = open(f, mode)
+    oldfd = oldf.fileno()
+    newfd = stream.fileno()
+    os.close(newfd)
+    os.dup2(oldfd, newfd)
+
+
 def update_address(ip):
     request_url = request_url_format.format(conf["name"], conf["pwd"], conf["host"], ip)
     logging.debug("request url : " + request_url)
-    response = requests.get(request_url).text
+    try:
+        response = requests.get(request_url).text
+    except IOError as e:
+        logging.error(e)
     logging.debug("response : " + response)
     if response.find("good") != -1 or response.find("nochg") != -1:
         logging.info("update success!  " + response)
@@ -127,8 +138,12 @@ if "start" == sys.argv[1]:
     os.kill(ppid, signal.SIGTERM)
 
     sys.stdin.close()
-    # TODO logger??
-    # ####### END daemon #############################
+    try:
+        freopen(log_file, 'a', sys.stdout)
+        freopen(log_file, 'a', sys.stderr)
+    except IOError as e:
+        logging.error(e)
+        sys.exit(1)
 elif "stop" == sys.argv[1]:
     import errno
 
@@ -199,7 +214,10 @@ ip = "0.0.0.0"
 iterator = retry_time  # 更新计时
 while True:
     # get IP
-    ip_temp = requests.get("http://ip.cip.cc").text
+    try:
+        ip_temp = requests.get("http://ip.cip.cc").text
+    except IOError as e:
+        logging.error(e)
     logging.debug("get IP:" + ip_temp)
     iterator -= 1  # 计时
     logging.debug("iterator:"+str(iterator))
