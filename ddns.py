@@ -86,6 +86,9 @@ def update_address(ip):
         response = requests.get(request_url).text
     except IOError as e:
         logging.error(e)
+    except :
+        import traceback
+        logging.error(traceback.format_exc())
     logging.debug("response : " + response)
     if response.find("good") != -1 or response.find("nochg") != -1:
         logging.info("update success!  " + response)
@@ -215,9 +218,14 @@ iterator = retry_time  # 更新计时
 while True:
     # get IP
     try:
-        ip_temp = requests.get("http://ip.cip.cc").text
+        response = requests.get("http://ip.cip.cc")
+        if response.status_code >= 200 and response.status_code<300:
+            ip_temp = response.text
     except IOError as e:
         logging.error(e)
+    except :
+        import traceback
+        logging.error(traceback.format_exc())
     logging.debug("get IP:" + ip_temp)
     iterator -= 1  # 计时
     logging.debug("iterator:"+str(iterator))
