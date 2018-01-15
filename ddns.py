@@ -81,20 +81,21 @@ def freopen(f, mode, stream):
 
 def update_address(ip):
     request_url = request_url_format.format(conf["name"], conf["pwd"], conf["host"], ip)
-    logging.debug("request url : " + request_url)
+    logging.info("request url : " + request_url)
     try:
         response = requests.get(request_url).text
+        logging.debug("response : " + response)
+        if response.find("good") != -1 or response.find("nochg") != -1:
+            logging.info("update success!  " + response)
+            return True
+        else:
+            return False
     except IOError as e:
         logging.error(e)
     except :
         import traceback
         logging.error(traceback.format_exc())
-    logging.debug("response : " + response)
-    if response.find("good") != -1 or response.find("nochg") != -1:
-        logging.info("update success!  " + response)
-        return True
-    else:
-        return False
+    return False
 
 
 # MAIN program
